@@ -1,0 +1,14 @@
+{
+  "name": "UniEnroll Learning Coach",
+  "short_name": "UniEnroll",
+  "description": "Learn the UTS 32555 University Enrolment System and rehearse the showcase.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#007aff",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
