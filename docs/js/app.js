@@ -27,7 +27,7 @@
   /* ------------------------------------------------- active source */
   A.snapshotFiles = () => Object.fromEntries(Object.entries(REPO.files).map(([k, v]) => [k, v.text]));
   A.files = () => (A.S.imported && A.S.imported.files) || A.snapshotFiles();
-  A.sourceLabel = () => (A.S.imported ? `Imported: ${A.S.imported.label}` : `Snapshot ${REPO.repo}@${REPO.commit} (${REPO.snapshotDate})`);
+  A.sourceLabel = () => (A.S.imported ? `Imported: ${A.S.imported.label}` : `Snapshot ${REPO.repo}@${REPO.commit} (${REPO.snapshotDate})${REPO.note ? " " + REPO.note : ""}`);
   A.lines = (p) => { const t = A.files()[p]; return t == null ? null : t.split("\n"); };
 
   /* Map hand-written notes onto the active version of a file. */
@@ -264,7 +264,7 @@
         <b>Showcase readiness</b><p class="muted small" style="margin:4px 0 8px">Lessons, tutor answers, quizzes, showcase practice and files explored.</p>
         <div class="small">🔥 ${A.S.streak.days || 0}-day streak · ${Object.keys(A.S.lessons).length}/${C.lessons.length} lessons</div></div></div>
         <div class="btns"><button class="btn" data-go="${next ? "/lesson/" + next.id : "/revision"}">${next ? "Continue: " + esc(next.title) : "Revision session"}</button></div></div>
-      ${KB.findings.length ? `<div class="card" style="border-left:4px solid var(--orange)"><b>⚠️ Check before your showcase</b><p class="small">The GUI login in your repo does not work as written (verified). ${KB.findings.length - 1} smaller issues were also found.</p><button class="btn small orange" data-go="/findings">See findings</button></div>` : ""}
+      ${KB.findings.length ? `<div class="card" style="border-left:4px solid var(--green)"><b>✅ GUI login bug fixed</b><p class="small">Learn the story of the bug and your fix — a great showcase answer. ${KB.findings.length - 1} smaller items are also listed.</p><div class="btns" style="margin-top:6px"><button class="btn small green" data-go="/lesson/L11">The login fix</button><button class="btn small gray" data-go="/findings">All findings</button></div></div>` : ""}
       <div class="tiles">
         ${tile("/tutor", "chat", "#5856d6", "AI Tutor", "Questions with hints")}
         ${tile("/showcase", "showcase", "#ff2d55", "Showcase sim", "Practise the demo")}
@@ -500,10 +500,10 @@
       ${N("Student Course Menu <code>c e r s x</code><br>c change password · e enrol (max 4)<br>r remove subject · s show · x back", "g")}</div>
       <p class="small muted">Only the top menu and the course menu accept uppercase/spaces.</p></div>`;
     if (tab === "gui") body = `<div class="dia"><div class="flow">${N("<b>python3 gui_main.py</b><br>Database + StudentController + EnrolmentController(None)", "k")}${AR}${N("LoginWindow (tk.Tk)<br>Email · Password · Login", "k")}${AR}
-      <div class="branch">${N("Correct login<br>→ withdraw() login<br>→ EnrolmentWindow", "g")}${N("Empty / bad email / wrong<br>→ ExceptionWindow<br><small>(intended)</small>", "e")}</div>${AR}
+      <div class="branch">${N("Correct login<br>→ withdraw() login<br>→ EnrolmentWindow", "g")}${N("Empty → Missing Details<br>Bad email → Invalid Email<br>Wrong → Login Failed", "e")}</div>${AR}
       ${N("EnrolmentWindow (Toplevel)<br>Enrol · Show My Subjects · Logout", "g")}${AR}
       <div class="branch">${N("5th subject → ExceptionWindow \"Enrolment Limit\"", "e")}${N("Show → SubjectWindow (or \"No Subjects\" pop-up)", "d")}${N("Logout → deiconify() login", "")}</div></div>
-      <div class="warnbox small">As written today, every login fails because login_gui returns a tuple. The diagram shows the intended flow. <a href="#/lesson/L11">Learn more</a></div></div>`;
+      <div class="say small">login_gui returns (student, None) or (None, error). The window unpacks it; an error is raised again so the matching except block opens the right ExceptionWindow. <a href="#/lesson/L11">How we fixed it</a></div></div>`;
     if (tab === "enrol") body = `<div class="dia"><div class="flow">${N("User types <b>e</b>", "")}${AR}${N("<code>EnrolmentMenu.enrol()</code><br>student_system/enrolment_menu.py:49", "k")}${AR}${N("<code>EnrolmentController.enrol()</code><br>count ≥ 4? → raise EnrolmentLimitError", "k")}${AR}
       ${N("<code>create_new_subject(existing_ids)</code><br>generate_subject_id → random free ID<br>generate_mark → 25-100 · calculate_grade", "g")}${AR}${N("<code>save_student()</code> → <code>convert_to_file_data()</code>", "k")}${AR}${N("<code>Database.update_student()</code> → <code>save_students()</code>", "d")}${AR}${N("students.data rewritten (JSON, indent=2)", "d")}${AR}${N("Menu prints \"Enrolling in Subject-XXX\" + count", "")}</div></div>`;
     if (tab === "data") body = `<div class="dia"><div class="uml"><div class="h">Student</div><div>student_id: str (6 digits)<br>name: str<br>email: str<br>password: str<br>subjects: list[Subject]</div><div>__init__(...)<br>convert_to_file_data() → dict<br>@classmethod create_from_file_data(dict) → Student</div></div>
@@ -536,7 +536,7 @@
     <p class="sec-f">Run them: <code>python3 -m unittest discover -s tests</code></p>` }));
 
   A.route("findings", () => ({ title: "Findings", tab: "learn", html: `<p class="sub" style="margin-top:12px">Things an instructor could ask about. The coach does <b>not</b> change your repository — share these with your team if you want to fix them.</p>
-    ${KB.findings.map((f) => `<div class="card"><span class="tag ${f.level === "high" ? "bad" : f.level === "medium" ? "warn" : f.level === "info" ? "info" : ""}">${f.level}</span> <b>${esc(f.title)}</b>
+    ${KB.findings.map((f) => `<div class="card"><span class="tag ${f.level === "fixed" ? "ok" : f.level === "high" ? "bad" : f.level === "medium" ? "warn" : f.level === "info" ? "info" : ""}">${f.level}</span> <b>${esc(f.title)}</b>
       <p class="small mono"><a href="#/file/${encodeURIComponent(f.file)}?l=${f.line}&open=1">${esc(f.file)}:${f.line}</a></p><p>${esc(f.text)}</p>
       <p class="small"><b>How we know:</b> ${esc(f.verified)}</p><p class="small"><b>Possible fix:</b> ${esc(f.fix)}</p><div class="say small"><b>🎤 If asked:</b> ${esc(f.say)}</div></div>`).join("")}` }));
 

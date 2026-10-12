@@ -2,7 +2,11 @@
 
 Run from the repository root:  python3 docs/tools/build_repo_data.py
 It only READS the project files; nothing in the project is changed.
+
+Optional: --source DIR reads the file contents from another folder (for example a
+copy with fixes that are not committed yet), and --note TEXT describes it.
 """
+import argparse
 import json
 import subprocess
 from pathlib import Path
@@ -16,12 +20,17 @@ def git(*args):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source", help="read file contents from this folder instead of the repo")
+    ap.add_argument("--note", default="", help="describe what is different in --source")
+    args = ap.parse_args()
+    src_root = Path(args.source).resolve() if args.source else ROOT
     tracked = git("ls-files").splitlines()
     files = {}
     for name in tracked:
         if name.startswith("docs/") or name == ".gitignore":
             continue
-        path = ROOT / name
+        path = src_root / name
         if not path.is_file():
             continue
         text = path.read_text(encoding="utf-8")
@@ -40,6 +49,7 @@ def main():
         "repo": "sultanrafeed/FDS-Uni-Enrol",
         "branch": "main",
         "commit": git("rev-parse", "--short", "main"),
+        "note": args.note,
         "snapshotDate": git("log", "-1", "--format=%ad", "--date=short", "main"),
         "files": files,
         "commits": commits,

@@ -135,7 +135,7 @@ Known verified findings:\n${findings}` },
       ${A.getKey() ? `<p class="sub" style="margin-top:10px">AI mode on (${esc(A.S.settings.model)}). Your key stays on this device.</p>` : `<div class="unvbox" style="margin:12px 16px">Offline mode: answers come from the hand-written notes, lessons and question bank. For free-form AI answers, add your own Anthropic API key in <a href="#/settings">Settings</a>.</div>`}
       <div class="chat" id="chat"></div>
       <div style="margin:12px 16px;display:flex;gap:8px"><textarea id="cq" style="min-height:52px" placeholder="Ask about any file, line, output or design choice…"></textarea><button class="btn" id="send">Send</button></div>
-      <div class="chips">${["Explain the GUI login problem simply", "What happens when a student enrols?", "Quiz me on database.py with hints", "Why use custom exceptions?", "Explain the password regex"].map((s) => `<button class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>`,
+      <div class="chips">${["Explain the GUI login fix simply", "What happens when a student enrols?", "Quiz me on database.py with hints", "Why use custom exceptions?", "Explain the password regex"].map((s) => `<button class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>`,
       mount() {
         const draw = () => { $("#chat").innerHTML = chat.map((m) => `<div class="msg ${m.role === "user" ? "me" : "ai"}">${m.role === "user" ? "" : '<div class="who">Tutor</div>'}${esc(m.content)}</div>`).join("") || `<div class="empty">Ask anything about your project.</div>`; };
         const send = async (text) => {
@@ -337,12 +337,12 @@ Known verified findings:\n${findings}` },
 
   /* ==================================================== GUI SIMULATOR */
   A.route("gui", (_, q) => {
-    const mode = q.mode || "real";
+    const mode = q.mode || "fixed";
     const db = new SIM.SimDB(A.files()["students.data"] || "[]");
     let student = null, popup = null, view = "login", status = ["", "green"], term = [];
     return { title: "GUI simulator", tab: "practice", html: `
-      <div class="seg"><button class="${mode === "real" ? "on" : ""}" data-go="/gui?mode=real">As written (today)</button><button class="${mode === "fixed" ? "on" : ""}" data-go="/gui?mode=fixed">Intended (after fix)</button></div>
-      ${mode === "real" ? `<div class="warnbox small" style="margin:0 16px 12px">This copies what <b>your current code</b> does (verified with a stand-in Tkinter). Try any login.</div>` : `<div class="unvbox" style="margin:0 16px 12px">This shows the <b>intended</b> behaviour after the one-line fix in login_window.py. It is NOT what your repository does today.</div>`}
+      <div class="seg"><button class="${mode === "fixed" ? "on" : ""}" data-go="/gui?mode=fixed">Now (with your fix)</button><button class="${mode === "before" ? "on" : ""}" data-go="/gui?mode=before">Before the fix</button></div>
+      ${mode === "before" ? `<div class="warnbox small" style="margin:0 16px 12px">This shows what the <b>old</b> code did before the login fix (verified with a stand-in Tkinter). Useful for explaining the bug.</div>` : `<div class="say small" style="margin:0 16px 12px">This follows your <b>fixed</b> code. Try a correct login, empty fields, a bad email and a wrong password. Check the real windows with <code>python3 gui_main.py</code> too.</div>`}
       <div id="gw"></div><div class="sec-h">Terminal output</div><div class="term" id="gt" style="min-height:60px"></div>`,
       mount() {
         const draw = () => {
@@ -373,7 +373,7 @@ Known verified findings:\n${findings}` },
           if (e === "" || p === "") err = ["Missing Details", "Please enter both your email and your password.", "LoginEmailOrPasswordEmptyError"];
           else if (!SIM.EMAIL.test(e)) err = ["Invalid Email", "Incorrect email format.\n\nEmails must look like:\nfirstname.lastname@university.com", "LoginEmailFormatInvalidError"];
           else { rec = db.byEmail(e); if (!rec || rec.password !== p) err = ["Login Failed", "Incorrect email or password.\n\nOnly registered students can use GUIUniApp.", "LoginStudentNotFoundError"]; }
-          if (mode === "real") {
+          if (mode === "before") {
             if (err) term.push("error loging in using GUI: ");
             term.push("error logging in in login window: 'tuple' object has no attribute 'name'");
             view = "broken"; draw(); A.toast(err ? `${err[2]} was caught inside login_gui, so no pop-up` : "Correct login — but the window still breaks"); return;
@@ -430,7 +430,7 @@ Known verified findings:\n${findings}` },
         <div class="btns"><button class="btn block" id="start">Start the showcase</button></div></div>
       <div class="sec-h">Before the real showcase</div>
       <div class="group">
-        ${A.row({ icon: "bug", color: "#ff3b30", t: "Know the known issues", d: "GUI login and smaller items", go: "/findings" })}
+        ${A.row({ icon: "bug", color: "#ff3b30", t: "Know the findings", d: "The GUI login fix and smaller items", go: "/findings" })}
         ${A.row({ icon: "term", color: "#1c1c1e", t: "Rehearse the live demo", d: "Use the test cases in the simulator", go: "/tests" })}
         ${A.row({ icon: "me", color: "#5856d6", t: "My contribution", d: "Facts from git history", go: "/contrib" })}
         ${A.row({ icon: "list", color: "#8e8e93", t: "Demo checklist", go: "/checklist" })}
@@ -508,7 +508,7 @@ Known verified findings:\n${findings}` },
   }
 
   A.route("checklist", () => {
-    const items = ["Back up students.data (admin “c” deletes everything, with no question)", "Run python3 main.py from the project root and try A, S, X", "Have 2 working logins ready: john.smith@university.com / Password123 and sarah.lee@university.com / Universe789", "Know that John already has 4 subjects (good for showing the limit)", "Test python3 gui_main.py on YOUR computer — the GUI login has a known issue", "Run python3 -m unittest discover -s tests", "Know which files you wrote and one function you can explain line by line", "Prepare one design decision and one improvement", "Know the regex rules by heart", "Close other apps; increase terminal font size"];
+    const items = ["Back up students.data (admin “c” deletes everything, with no question)", "Run python3 main.py from the project root and try A, S, X", "Have 2 working logins ready: john.smith@university.com / Password123 and sarah.lee@university.com / Universe789", "Know that John already has 4 subjects (good for showing the limit)", "Test python3 gui_main.py on YOUR computer: correct login, empty fields, bad email, wrong password", "Run python3 -m unittest discover -s tests", "Know which files you wrote and one function you can explain line by line", "Prepare one design decision and one improvement", "Know the regex rules by heart", "Close other apps; increase terminal font size"];
     const st = A.S.settings.check || {};
     return { title: "Demo checklist", tab: "showcase", html: `<div class="group flat" style="margin-top:12px">${items.map((t, k) => `<label class="row noicon"><input type="checkbox" data-k="${k}" ${st[k] ? "checked" : ""} style="width:22px;height:22px"><span class="main"><div class="t" style="font-size:16px">${esc(t)}</div></span></label>`).join("")}</div>`,
       mount() { $$("[data-k]").forEach((c) => (c.onchange = () => { A.S.settings.check = Object.assign(A.S.settings.check || {}, { [c.dataset.k]: c.checked }); A.save(); })); } };
@@ -625,11 +625,11 @@ Known verified findings:\n${findings}` },
     return `Changed: ${ch.length ? ch.map(esc).join(", ") : "none"}<br>New: ${add.length ? add.map(esc).join(", ") : "none"}<br>Missing: ${gone.length ? gone.map(esc).join(", ") : "none"}<br>Notes that could not be re-matched: <b>${unv}</b>`;
   }
 
-  A.route("about", () => ({ title: "About", tab: "me", html: `<div class="card"><h3>UniEnroll Learning Coach</h3><p class="small">A study app for UTS 32555 Fundamentals of Software Development, Assessment 1 (Parts 2 & 3), Cmp1-07 Group 3. Built from the real repository <span class="mono">${REPO.repo}</span> at commit <span class="mono">${REPO.commit}</span> (${REPO.snapshotDate}).</p></div>
+  A.route("about", () => ({ title: "About", tab: "me", html: `<div class="card"><h3>UniEnroll Learning Coach</h3><p class="small">A study app for UTS 32555 Fundamentals of Software Development, Assessment 1 (Parts 2 & 3), Cmp1-07 Group 3. Built from the real repository <span class="mono">${REPO.repo}</span> at commit <span class="mono">${REPO.commit}</span> (${REPO.snapshotDate})${REPO.note ? " " + esc(REPO.note) : ""}.</p></div>
     <div class="sec-h">What is verified</div><div class="card small">
       ✅ <b>Code explanations</b> — written from the actual source; every note is tied to an anchor line, checked automatically.<br>
       ✅ <b>CLI simulator outputs</b> — compared with the real Python program for all ${C.tests.length - 2} test cases without random IDs or marks (identical, including colours).<br>
-      ✅ <b>GUI login issue</b> — reproduced by running the real code with a stand-in Tkinter.<br>
+      ✅ <b>GUI login bug</b> — reproduced with a stand-in Tkinter, and the fixed version tested the same way (all four login cases).<br>
       ✅ <b>Contribution facts</b> — from git history and code comments.<br><br>
       <span class="tag unv">Cannot verify</span> the assignment brief, sample output, marking rubric, and how the GUI looks on your computer. These are clearly marked where they appear.<br><br>
       🔒 The app never modifies your repository. Progress is stored only on this device.</div>` }));

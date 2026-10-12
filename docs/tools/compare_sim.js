@@ -1,5 +1,6 @@
 // Compares the JS simulator with the REAL Python CLI for every deterministic test case.
-// usage: node docs/tools/compare_sim.js   (run from repo root; needs python3)
+// usage: node docs/tools/compare_sim.js [SOURCE_DIR]   (run from repo root; needs python3)
+// SOURCE_DIR: optional folder with a (fixed) copy of the project to run instead of the repo files.
 global.window = global;
 const { execFileSync } = require("child_process"); const fs = require("fs"); const os = require("os"); const path = require("path");
 require("../js/repo-data.js"); require("../js/content.js"); require("../js/simulator.js");
@@ -16,7 +17,8 @@ const wrap = (t, c) => (c ? codes[c] + t + "\x1b[0m" : t);
     await SIM.runCLI(db, { input: async (p, c) => { s += wrap(p, c); return i < tc.inputs.length ? tc.inputs[i++] : null; }, print: (t, c) => (s += wrap(t, c) + "\n"), trace() {}, changed() {}, end() {} });
     // Python stream on a temp copy
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sim"));
-    execFileSync("bash", ["-c", `cd "${ROOT}" && git ls-files | grep -v '^docs/' | tar cf - -T - | tar xf - -C "${tmp}"`]);
+    const SRC = process.argv[2] ? path.resolve(process.argv[2]) : ROOT;
+    execFileSync("bash", ["-c", `cd "${ROOT}" && git ls-files | grep -v '^docs/' | (cd "${SRC}" && tar cf - -T -) | tar xf - -C "${tmp}"`]);
     let py = "";
     try { py = execFileSync("python3", ["main.py"], { cwd: tmp, input: tc.inputs.join("\n") + "\n" }).toString(); }
     catch (e) { py = e.stdout.toString(); }
